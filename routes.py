@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends,HTTPException
 from sqlalchemy.orm import Session,joinedload
 from database import Sessionlocal
 from models import Author, Profile, Blog, Category, BlogCategory
-from schemas import SeedResponse, AuthorCreate, ProfileCreate, BlogCreate, CategoryCreate,EagerResponse,CustomEagerBlog,EagerBlogResponse
-
+from schemas import SeedResponse, AuthorCreate, ProfileCreate, BlogCreate, CategoryCreate,EagerResponse,CustomEagerBlog,EagerBlogResponse,TotalBlogResponse
+from helpers import paginate,filter_by_category
 router = APIRouter()
 
 def get_db():
@@ -108,11 +108,16 @@ def eager(id: int, db: Session = Depends(get_db)):
     }
 
 @router.get("/eager/blog/{id}",response_model=EagerBlogResponse)
-def eager_blog(id:int , db:Session=Depends(get_db)):
+def eager_blog(id:int,db:Session=Depends(get_db),page:int=1,limit:int=1):
     db_blog=db.query(Blog).options(
         joinedload(Blog.author),
         joinedload(Blog.categories).joinedload(BlogCategory.category)
     ).filter(Blog.id==id).first()
+   
+    if not db_blog:
+        raise HTTPException(status_code=404,detail={"message":"Blog not found"})
+    
+    db_blog=paginate(db_blog,page,limit)
     return{
         "title":db_blog.title,
         "author":db_blog.author.name,
@@ -120,4 +125,27 @@ def eager_blog(id:int , db:Session=Depends(get_db)):
             {"name": bc.category.name}
             for bc in db_blog.categories
         ],
+    }
+@router.get("/blogs", response_model=TotalBlogResponse)
+def get_blogs(
+    db: Session = Depends(get_db),
+    page: int = 1,
+    limit: int = 10
+):
+    query = db.query(Blog)
+    blogs = paginate(query, page, limit)
+
+    return {
+        "blogs": blogs
+    }
+@router.get("/blogs/category", response_model=TotalBlogResponse)
+def get_category_blogs(
+    category: str,
+    db: Session = Depends(get_db)
+):
+    query = db.query(Blog)
+    blogs = filter_by_category(query, category)
+
+    return {
+        "blogs": blogs
     }

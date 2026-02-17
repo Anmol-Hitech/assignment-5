@@ -13,7 +13,7 @@ class ProfileCreate(BaseModel):
 
 class BlogCreate(BaseModel):
     title: str
-    content: str
+    content: Optional[str]=None
 
 
 class CategoryCreate(BaseModel):
@@ -37,3 +37,13 @@ class EagerBlogResponse(BaseModel):
     title:str
     author:str
     categories:List[CategoryCreate]
+
+
+class BlogResponse(BaseModel):
+    id: int
+    title: str
+    content: str
+
+
+class TotalBlogResponse(BaseModel):
+    blogs: List[BlogResponse]
