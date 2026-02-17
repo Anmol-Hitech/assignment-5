@@ -1,7 +1,7 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey,DateTime
 from sqlalchemy.orm import relationship
 from database import Base
-
+from datetime import date, datetime
 
 class Author(Base):
     __tablename__ = "authors"
@@ -31,7 +31,7 @@ class Blog(Base):
     title = Column(String, nullable=False)
     content = Column(String, nullable=False)
     author_id = Column(Integer, ForeignKey("authors.id", ondelete="SET NULL"), nullable=True)
-
+    published_at=Column(DateTime,default=datetime.now,nullable=False)
     author = relationship("Author", back_populates="blogs")
     categories = relationship("BlogCategory", back_populates="blog", cascade="all, delete-orphan")
 
